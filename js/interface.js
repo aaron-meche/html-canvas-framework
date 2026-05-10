@@ -22,6 +22,7 @@ function ContentView(arr) {
 class UIElement {
     tag = "div"
     content = ""
+
     format = {
         position: "relative",
         display: "block",
@@ -33,19 +34,12 @@ class UIElement {
         font_size: "12pt",
         color: "white"
     }
+
+    hover = {
+
+    }
+
     protocols = {
-        // High Priority
-        "opacity":  input => { this.style.opacity = input },
-        // Text Formatting
-        "bold":     input => { this.format.font_weight = "bold" },
-        "italic":   input => { this.format.font_style = "italic" },
-        "color":    input => { this.format.color = input },
-        "align":    input => { this.format.align = input },
-        "fontSize": input => { this.format.size = input },
-        // Positioning
-        "position": input => { this.format.position = input },
-        "top":      input => { this.format.top = input },
-        "left":     input => { this.format.left = input },
         "place":    input => { 
             let split = input.trim().split(" ")
             if (split.length == 1) {
@@ -57,9 +51,6 @@ class UIElement {
                 this.format.left = split[1]
             }
         },
-        // Sizing
-        "height":   input => { this.format.height = input },
-        "width":    input => { this.format.width = input },
         "size":     input => { 
             let split = input.trim().split(" ")
             if (split.length == 1) {
@@ -71,12 +62,13 @@ class UIElement {
                 this.format.width = split[1]
             }
             if (this.format.position == "relative") this.format.position = "absolute"
-         },
-        // Element Formatting
-        "background": input => { this.format.background = input },
-        "fill":     input => { this.format.background = input },
-        "bg":       input => { this.format.background = input },
-        "outline":  input => { this.format.outline = input},
+        },
+        "onHover": input => {
+            Object.keys(input).forEach(attr => {
+                this.hover[attr] = input[attr]
+            })
+            console.log(this.hover)
+        },
         "contains": input => {
             input.forEach(elem => {
                 if (typeof elem == "string") this.content += elem
@@ -84,6 +76,7 @@ class UIElement {
             })
         }
     }
+
     constructor(config) {
         let configKeys = Object.keys(config)
         for (let i = 0; i < configKeys.length; i++) {
@@ -92,8 +85,12 @@ class UIElement {
                 this.protocols[currConfigKey](config[currConfigKey])
                 console.log(currConfigKey)
             }
+            else {
+                this.format[currConfigKey] = config[currConfigKey]
+            }
         }
     }
+
     getStyle() {
         let returnString = ""
         Object.keys(this.format).forEach(attr => {
@@ -101,36 +98,32 @@ class UIElement {
         })
         return returnString
     }
+
+    getJSStyle() {
+        let returnString = ""
+        Object.keys(this.format).forEach(attr => {
+            returnString += `this.style.${attr.replaceAll("_", "")}="${this.format[attr]}";`
+        })
+        return returnString
+    }
+
+    getHoverScripts() {
+        let onMouseOver = ""
+        let onMouseOut = ""
+
+        return `onmouseover='${onMouseOver}' onmouseout='${onMouseOut}'`
+    }
+
     getHTML() {
         let tag = null
         let html = [
             `<${this.tag} style='`,
-            this.getStyle(),
+            this.getStyle(this.style),
             `'>`,
             this.content,
             `</${this.tag}>`
         ]
         return html.join("")
-    }
-}
-
-class Text extends UIElement {
-    #getFontString() {
-        let string = ""
-        if (this.format.bold) string += this.format.bold + " "
-        if (this.format.italic) string += this.format.italic + " "
-        string += this.format.size + " "
-        string += this.format.font
-        return string
-    }
-
-    constructor(text, config) {
-        super(config)
-        ctx.font            = this.#getFontString()
-        ctx.fillStyle       = this.format.color
-        ctx.textAlign       = this.format.align
-        ctx.textBaseline    = this.format.baseline
-        ctx.fillText(text, Math.round(this.position.left), Math.round(this.position.top))
     }
 }
 
@@ -152,9 +145,11 @@ class Background extends Rectangle {
 
 ContentView([
     new Rectangle({
-        place: "10% 10%",
-        size: "150pt 80%",
+        padding: "12pt",
         background: "rgb(20, 20, 200)",
+        onHover: {
+            background: "red"
+        },
         contains: [
             "Hey there, what have you been up to?"
         ]
