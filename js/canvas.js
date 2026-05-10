@@ -51,7 +51,6 @@ class Text {
     baseline = "top"
 
     constructor(text, config) {
-        console.log(config)
         this.text = text
         let {
             font,
@@ -77,15 +76,19 @@ class Text {
 }
 
 class Rectangle {
-    left = 0
-    top = 0
-    width = 0
-    height = 0
-    background = null
-    outline = null
-    text = null
     constructor(config) {
         let configObj = handleConfig(config)
+    }
+}
+
+function handleDynamicInputs(input, store, logic) {
+
+    for (let i = 0; i < logic.length; i++) {
+        let currStep = logic[i]
+        let splitStep = currStep?.split("_")
+        if (splitStep == 1) {
+            store?.[attributes[0]]
+        }
     }
 }
 
@@ -99,7 +102,6 @@ function handleConfig(config) {
         height: null, width: null,
         size: null,
     }
-    let conveyor = []
     const configKeys = Object.keys(config)
     const protocols = {
         "top":      input => { position.top = input },
@@ -109,6 +111,11 @@ function handleConfig(config) {
         "height":   input => { size.height = input },
         "width":    input => { size.width = input },
         "place":    input => {
+            // handleDynamicInputs(
+            //     input,
+            //     position, 
+            //     ["top_left", "top left"]
+            // )
             let split = input.trim().split(" ")
             if (split.length == 1) {
                 position.top = input
