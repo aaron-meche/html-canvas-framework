@@ -1,40 +1,26 @@
 //
 // script.js
 //
-// HTML UI Framework
-// main Interface Designer
+// Mocha UI Framework
+// Interface Designer
 //
 // created by Aaron Meche
 
 import { 
-    Interface,
-    Rectangle, 
-    HStack, VStack
+    Interface,      // App Builder
+    Rectangle,      // Basic UI Element DIV
+    UIElement,      // Parent UI Element Class
+    HStack, VStack, // Visual Elements
+    StateStore,     // State Manager
+    classes         // Style
 } from "./js/interface.js"
 
-const adjustColor = (level) => { 
-    let base = 25
-    let size = 8
-    let sum = base + size * level
-    return `rgb(${sum}, ${sum}, ${sum})` 
-}
-
-let counter = 0
-const liveCounter = () => {
-    return new Rectangle({
-        padding: "12pt",
-        font_size: "2rem",
-        font_weight: "600",
-        letter_spacing: "1pt",
-        text_align: "center",
-        contains: [
-            "Live Counter ... WIP"
-        ]
-    })
-}
+let state = new StateStore({
+    "counter": 0
+})
 
 const basicRectangle = (level) => {
-    let base = 0
+    let base = 12
     let size = 12
     let sum = base + size * level
     let color = `rgb(${sum}, ${sum}, ${sum})` 
@@ -46,24 +32,54 @@ const basicRectangle = (level) => {
         font_weight: 600,
         opacity: 0.5,
         onhover: (elem) => {
-            elem.style.opacity = 1
+            elem.style.boxShadow = "inset 0 0 1rem 0 rgb(255, 255, 255)"
+            state.update(data => {
+                data.counter++
+                return data
+            })
         }
     })
 }
 
-console.time("build")
 let gradient = []
-let gradient_stacks = []
-for (let i = 0; i < 10; i++) {
-    gradient.push(basicRectangle(i))
-}
-for (let i = 0; i < 10; i++) {
-    gradient_stacks.push(new HStack(gradient))
-}
+for (let i = 0; i < 10; i++) { gradient.push(basicRectangle(i)) }
+
+const examples = [
+    [
+        new HStack(gradient),
+        new Rectangle({
+            ...classes.heading,
+            ...classes.center,
+            padding: "1.6rem",
+            contains: () => {
+                return "Counter: " + state.get("counter")
+            }
+        }),
+        new Rectangle({
+            ...classes.heading,
+            ...classes.center,
+            padding: "1.6rem",
+            contains: () => {
+                return state.get("time")
+            }
+        })
+    ]
+]
+
+let startTime = Date.now()
+state.set("time", 0)
+setInterval(() => {
+    let elapsed = Math.round((Date.now() - startTime) / 100)
+    state.set("time", Math.round(elapsed))
+})
+
+const appContent = [
+    new UIElement({
+        padding: "1.2rem",
+        background: "rgb(20, 20, 20)",
+    })
+]
 
 const ui = new Interface({
-    "app": [
-        new VStack(gradient_stacks)
-    ]
+    "app": examples[0]
 })
-console.timeEnd("build")

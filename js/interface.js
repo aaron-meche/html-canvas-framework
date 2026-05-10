@@ -6,27 +6,29 @@
 //
 
 // Window
-let app = null
+let docHead = null
+let docBody = null
+let stateManager = {}
 let windowHeight, windowWidth
 
-function ContentView(arr) {
-    arr.forEach(elem => {
-        body.innerHTML += elem.getHTML()
-    })
-}
-
 export class Interface {
-    head = null
-    body = null
     constructor(contents) {
-        const body = document.body
-        body.style.margin = 0
-        try { 
-            let bodyTarget = contents?.["app"] ?? contents?.["body"] ?? contents?.["main"] ?? null
-            if (bodyTarget) bodyTarget.forEach(elem => { body.innerHTML += elem.getHTML() }) 
-            else throw new Error("No bodyTarget found when building interface.")
+        if (!document) return
+        docBody = document.body
+        docBody.style.margin = 0
+        let bodyContent = ""
+        let bodyTarget = contents?.["app"] 
+            ?? contents?.["body"] 
+            ?? contents?.["main"] 
+            ?? null
+        if (!bodyTarget || !Array.isArray(bodyTarget)) 
+            throw new Error("Invalid or missing bodyTarget input to interface.")
+        for (let i = 0; i < bodyTarget.length; i++) {
+            const currElem = bodyTarget[i]
+            if (typeof currElem == "string") bodyContent += currElem
+            else bodyContent += currElem.getHTML()
         }
-        catch (err) { throw new Error(err) }
+        docBody.innerHTML = bodyContent + docBody.innerHTML
     }
 }
 
@@ -75,29 +77,20 @@ export class UIElement {
     }
 
     behaviors = {}
+    identifiers = {}
 
     protocols = {
         "place":    input => { 
             let split = input.trim().split(" ")
-            if (split.length == 1) {
-                this.format.top = input
-                this.format.left = input
-            }
-            else if (split.length == 2) {
-                this.format.top = split[0]
-                this.format.left = split[1]
-            }
+            if (split.length == 1) { this.format.top = input; this.format.left = input }
+            else if (split.length == 2) { this.format.top = split[0]; this.format.left = split[1] }
+            else throw new Error("unsupported 'place' input")
         },
         "size":     input => { 
             let split = input.trim().split(" ")
-            if (split.length == 1) {
-                this.format.height = input
-                this.format.width = input
-            }
-            else if (split.length == 2) {
-                this.format.height = split[0]
-                this.format.width = split[1]
-            }
+            if (split.length == 1) { this.format.height = input; this.format.width = input }
+            else if (split.length == 2) {this.format.height = split[0]; this.format.width = split[1] }
+            else throw new Error("unsupported 'size' input")
         },
         "onhover": input => {
             checkWindowClickRegistry()
@@ -113,10 +106,22 @@ export class UIElement {
             this.behaviors.onclick = "window.dispatchClick('" + id + "', this);"
         },
         "contains": input => {
-            input.forEach(elem => {
-                if (typeof elem == "string") this.content += elem
-                else this.content += elem.getHTML()
-            })
+            // Default, Array-based content
+            if (Array.isArray(input)) {
+                let contentArray = input
+                contentArray.forEach(elem => {
+                    if (typeof elem == "string")
+                        this.content += elem
+                    else this.content += elem.getHTML()
+                })
+            }
+            // State, Function-based content
+            else if (typeof input == "function") {
+                const id = 'hov_' + Math.random().toString(36).substring(2, 11)
+                this.content = input()
+                this.identifiers["live_state"] = id
+                stateManager[id] = input
+            }
         }
     }
 
@@ -124,12 +129,9 @@ export class UIElement {
         let configKeys = Object.keys(config)
         for (let i = 0; i < configKeys.length; i++) {
             const currConfigKey = configKeys[i]
-            if (this.protocols[currConfigKey]) {
+            if (this.protocols[currConfigKey])
                 this.protocols[currConfigKey](config[currConfigKey])
-            }
-            else {
-                this.format[currConfigKey] = config[currConfigKey]
-            }
+            else this.format[currConfigKey] = config[currConfigKey]
         }
     }
 
@@ -150,12 +152,22 @@ export class UIElement {
         return returnString
     }
 
+    getIdentifierString() {
+        if (!this.identifiers) return ""
+        let returnString = ""
+        Object.keys(this.identifiers).forEach(id => {
+            returnString += " " + id + '="' + this.identifiers[id] + '" '
+        })
+        return returnString
+    }
+
     getHTML() {
         let tag = null
         let html = [
             "<", this.tag, " ",
             "style='", this.getStyle(this.style), "'",
-            this.getBehaviorString(),
+            this.getBehaviorString(), this.getIdentifierString(),
+            " ",
             ">", this.content, "</", this.tag, ">"
         ]
         return html.join("")
@@ -190,6 +202,37 @@ export class VStack extends UIElement {
     }
 }
 
-export class StateText extends UIElement {
-    
+export class StateStore {
+    #data = {}
+
+    constructor(init) {
+        if (init) this.#data = init
+    }
+
+    #updateUI() {
+        document.querySelectorAll("[live_state]").forEach(elem => {
+            elem.innerHTML = stateManager[elem.getAttribute("live_state")]()
+        })
+    }
+
+    set(key, val) { this.#data[key] = val; this.#updateUI() }
+    get(key) { return this.#data?.[key] }
+    update(callback) { 
+        if (!callback) { this.#updateUI(); return }
+        let response = callback(this.#data) 
+        if (response) { this.#data = response; this.#updateUI() }
+        else throw new Error("Error during state update")
+    }
+}
+
+export const classes = {
+    "heading": {
+        font_size: "2.4rem",
+        font_weight: "700",
+    },
+    "center": {
+        display: "flex",
+        align_items: "center",
+        justify_content: "center",
+    }
 }
