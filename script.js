@@ -8,7 +8,8 @@
 
 import { 
     Interface,
-    Rectangle, HStack 
+    Rectangle, 
+    HStack, VStack
 } from "./js/interface.js"
 
 const adjustColor = (level) => { 
@@ -18,44 +19,52 @@ const adjustColor = (level) => {
     return `rgb(${sum}, ${sum}, ${sum})` 
 }
 
+let counter = 0
+const liveCounter = () => {
+    return new Rectangle({
+        padding: "12pt",
+        font_size: "2rem",
+        font_weight: "600",
+        letter_spacing: "1pt",
+        text_align: "center",
+        contains: [
+            "Live Counter ... WIP"
+        ]
+    })
+}
+
 const basicRectangle = (level) => {
-    let counter = 0
-    let base = 24
-    let size = 12
+    let base = 0
+    let size = 1
     let sum = base + size * level
     let color = `rgb(${sum}, ${sum}, ${sum})` 
     return new Rectangle({
-        padding: "36pt 12pt",
+        height: "100px",
         background: color,
         text_align: "center",
         font_size: "10pt",
         font_weight: 600,
-        contains: [
-            "Level " + level
-        ],
         onhover: (elem) => {
-            elem.style.opacity = 0.5
-        },
-        onclick: (elem) => {
-            counter++
             elem.style.background = "red"
-            setTimeout(() => {
-                elem.style.background = color
-            }, 1000)
+            elem.style.cursor = "pointer"
         }
     })
 }
 
+console.time("build")
+let gradient = []
+let gradient_stacks = []
+for (let i = 0; i < 255; i++) {
+    gradient.push(basicRectangle(i))
+    gradient.push(basicRectangle(Math.abs(255 - i)))
+}
+for (let i = 0; i < 10; i++) {
+    gradient_stacks.push(new HStack(gradient))
+}
+
 const ui = new Interface({
     "app": [
-        new HStack([
-            basicRectangle(0),
-            basicRectangle(1),
-            basicRectangle(2),
-            basicRectangle(3),
-            basicRectangle(4),
-            basicRectangle(5),
-            basicRectangle(6),
-        ])
+        new VStack(gradient_stacks)
     ]
 })
+console.timeEnd("build")

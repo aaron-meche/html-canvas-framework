@@ -189,3 +189,7 @@ export class VStack extends UIElement {
         })
     }
 }
+
+export class StateText extends UIElement {
+    
+}
