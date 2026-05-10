@@ -105,6 +105,7 @@ class UIElement {
             }
             if (protocolCounter[0] == protocolCounter[1]) i = protocolKeys.length
         }
+        ctx.globalAlpha = 1
     }
 }
 
@@ -206,12 +207,44 @@ ContentView(() => {
         place: "10% 10%",
         size: "80% 80%",
         background: "blue",
-        opacity: 0.3,
+        opacity: 0.2,
     })
-    new Text("Title Text", {
-        place: "50% 50%",
+    new Text("Level 1", {
+        place: "15% 50%",
         fontSize: 24,
         align: "center",
-        baseline: "middle"
+        baseline: "top"
+    })
+    new Rectangle({
+        place: "65% 10%",
+        size: "25% 80%",
+        background: "green",
+        opacity: 0.6
+    })
+
+    new Rectangle({
+        place: "10% 10%",
+        size: "20% 5%",
+        background: "white",
+        opacity: 0.6
+    })
+    new Rectangle({
+        place: "50% 10%",
+        size: "15% 5%",
+        background: "white",
+        opacity: 0.6
+    })
+
+    new Rectangle({
+        place: "10% 20%",
+        size: "15% 5%",
+        background: "white",
+        opacity: 0.6
+    })
+    new Rectangle({
+        place: "45% 20%",
+        size: "20% 5%",
+        background: "white",
+        opacity: 0.6
     })
 })
