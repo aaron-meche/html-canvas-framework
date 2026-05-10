@@ -35,18 +35,18 @@ const liveCounter = () => {
 
 const basicRectangle = (level) => {
     let base = 0
-    let size = 1
+    let size = 12
     let sum = base + size * level
     let color = `rgb(${sum}, ${sum}, ${sum})` 
     return new Rectangle({
-        height: "100px",
+        height: "10vh",
         background: color,
         text_align: "center",
         font_size: "10pt",
         font_weight: 600,
+        opacity: 0.5,
         onhover: (elem) => {
-            elem.style.background = "red"
-            elem.style.cursor = "pointer"
+            elem.style.opacity = 1
         }
     })
 }
@@ -54,9 +54,8 @@ const basicRectangle = (level) => {
 console.time("build")
 let gradient = []
 let gradient_stacks = []
-for (let i = 0; i < 255; i++) {
+for (let i = 0; i < 10; i++) {
     gradient.push(basicRectangle(i))
-    gradient.push(basicRectangle(Math.abs(255 - i)))
 }
 for (let i = 0; i < 10; i++) {
     gradient_stacks.push(new HStack(gradient))
