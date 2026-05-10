@@ -5,10 +5,6 @@
 // written by Aaron Meche
 //
 
-// Body
-const body = document.getElementById("body")
-body.style.margin = 0
-
 // Window
 let app = null
 let windowHeight, windowWidth
@@ -19,12 +15,55 @@ function ContentView(arr) {
     })
 }
 
-class UIElement {
+export class Interface {
+    head = null
+    body = null
+    constructor(contents) {
+        const body = document.body
+        body.style.margin = 0
+        try { 
+            let bodyTarget = contents?.["app"] ?? contents?.["body"] ?? contents?.["main"] ?? null
+            if (bodyTarget) bodyTarget.forEach(elem => { body.innerHTML += elem.getHTML() }) 
+            else throw new Error("No bodyTarget found when building interface.")
+        }
+        catch (err) { throw new Error(err) }
+    }
+}
+
+function checkWindowClickRegistry() {
+    if (!window.dispatchHover) {
+        window.hoverState = new Map()
+        window.dispatchHover = (id, elem) => {
+            const handler = window.clickRegistry.get(id)
+            if (typeof handler === 'function') {
+                window.hoverState.set(id, elem.style.cssText)
+                handler(elem)
+            }
+        }
+        window.dispatchHoverOut = (id, elem) => {
+            const origStyle = window.hoverState.get(id)
+            if (origStyle) {
+                elem.style.cssText = origStyle
+                window.hoverState.delete(id)
+            }
+        }
+    }
+    if (!window.clickRegistry) {
+        window.clickRegistry = new Map()
+        window.dispatchClick = (id, elem) => {
+            const handler = window.clickRegistry.get(id)
+            if (typeof handler === 'function') {
+                handler(elem)
+            }
+        }
+    }
+}
+
+export class UIElement {
     tag = "div"
     content = ""
 
     format = {
-        position: "relative",
         display: "block",
         height: "auto",
         width: "auto",
@@ -35,9 +74,7 @@ class UIElement {
         color: "white"
     }
 
-    hover = {
-
-    }
+    behaviors = {}
 
     protocols = {
         "place":    input => { 
@@ -61,13 +98,19 @@ class UIElement {
                 this.format.height = split[0]
                 this.format.width = split[1]
             }
-            if (this.format.position == "relative") this.format.position = "absolute"
         },
-        "onHover": input => {
-            Object.keys(input).forEach(attr => {
-                this.hover[attr] = input[attr]
-            })
-            console.log(this.hover)
+        "onhover": input => {
+            checkWindowClickRegistry()
+            const id = 'hov_' + Math.random().toString(36).substring(2, 11)
+            window.clickRegistry.set(id, input)
+            this.behaviors.onmouseenter = "window.dispatchHover('" + id + "', this);"
+            this.behaviors.onmouseleave = "window.dispatchHoverOut('" + id + "', this);"
+        },
+        "onclick": input => {
+            checkWindowClickRegistry()
+            const id = 'clk_' + Math.random().toString(36).substring(2, 11);
+            window.clickRegistry.set(id, input);
+            this.behaviors.onclick = "window.dispatchClick('" + id + "', this);"
         },
         "contains": input => {
             input.forEach(elem => {
@@ -83,7 +126,6 @@ class UIElement {
             const currConfigKey = configKeys[i]
             if (this.protocols[currConfigKey]) {
                 this.protocols[currConfigKey](config[currConfigKey])
-                console.log(currConfigKey)
             }
             else {
                 this.format[currConfigKey] = config[currConfigKey]
@@ -94,64 +136,56 @@ class UIElement {
     getStyle() {
         let returnString = ""
         Object.keys(this.format).forEach(attr => {
-            returnString += `${attr.replaceAll("_", "-")}: ${this.format[attr]};`
+            returnString += `${attr.replaceAll("_", "-")}:${this.format[attr]};`
         })
         return returnString
     }
 
-    getJSStyle() {
+    getBehaviorString() {
+        if (!this.behaviors) return ""
         let returnString = ""
-        Object.keys(this.format).forEach(attr => {
-            returnString += `this.style.${attr.replaceAll("_", "")}="${this.format[attr]}";`
+        Object.keys(this.behaviors).forEach(behavior => {
+            returnString += " " + behavior + '="' + this.behaviors[behavior] + '";'
         })
         return returnString
-    }
-
-    getHoverScripts() {
-        let onMouseOver = ""
-        let onMouseOut = ""
-
-        return `onmouseover='${onMouseOver}' onmouseout='${onMouseOut}'`
     }
 
     getHTML() {
         let tag = null
         let html = [
-            `<${this.tag} style='`,
-            this.getStyle(this.style),
-            `'>`,
-            this.content,
-            `</${this.tag}>`
+            "<", this.tag, " ",
+            "style='", this.getStyle(this.style), "'",
+            this.getBehaviorString(),
+            ">", this.content, "</", this.tag, ">"
         ]
         return html.join("")
     }
 }
 
-class Rectangle extends UIElement {
+export class Rectangle extends UIElement {
     constructor(config) {
         super(config)
     }
 }
 
-class Background extends Rectangle {
-    constructor(config) {
+export class HStack extends UIElement {
+    constructor(elements, config = {}) {
         super({
             ...config,
-            size: "100% 100%",
-            background: config.background ?? "yellow"
+            display: "grid",
+            grid_template_columns: "repeat(" + elements.length + ", 1fr)",
+            contains: elements
         })
     }
 }
 
-ContentView([
-    new Rectangle({
-        padding: "12pt",
-        background: "rgb(20, 20, 200)",
-        onHover: {
-            background: "red"
-        },
-        contains: [
-            "Hey there, what have you been up to?"
-        ]
-    })
-])
+export class VStack extends UIElement {
+    constructor(elements, config = {}) {
+        super({
+            ...config,
+            display: "grid",
+            grid_template_columns: "1fr",
+            contains: elements
+        })
+    }
+}
