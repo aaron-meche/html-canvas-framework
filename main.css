@@ -1,0 +1,48 @@
+@font-face {
+    font-family: Figtree;
+    src: url("assets/Figtree/Figtree-VariableFont_wght.ttf");
+    font-display: swap;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    background: hsl(28, 26%, 96%);
+    color: hsl(230, 22%, 12%);
+    font-size: 1rem;
+    font-family: Figtree, ui-sans-serif, system-ui, sans-serif;
+}
+
+a,
+button {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+    cursor: pointer;
+}
+
+input {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+}
+
+pre,
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+@media (max-width: 760px) {
+    .hero-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
