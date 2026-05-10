@@ -43,117 +43,44 @@ function ContentView(cb) {
     resizeCanvas()
 }
 
-class Text {
-    text = "Text"
-    font = "Arial"
-    color = "White"
-    align = "left"
-    baseline = "top"
-
-    constructor(text, config) {
-        this.text = text
-        let {
-            font,
-            size,
-            bold,
-            italic,
-            color,
-            align,
-            baseline,
-        } = config
-
-        bold = bold ? "bold" : ""
-        italic = italic ? "italic" : ""
-        size = size ? Math.round(size) + "px" : ""
-        this.font = `${bold} ${italic} ${size} ${font ?? this.font}`
-
-        ctx.font =          this.font
-        ctx.fillStyle =     color       ?? this.color
-        ctx.textAlign =     align       ?? this.align
-        ctx.textBaseline =  baseline    ?? this.baseline
-        ctx.fillText(text, Math.round(config.left), Math.round(config.top), 90 * vw)
+class UIElement {
+    position = { top: 0, left: 0, anchor: "tl" }
+    size = { height: null, width: null }
+    format = {
+        text: "Default Text",
+        font: "Arial",
+        color: "white",
+        align: "left",
+        baseline: "top",
+        bold: "", 
+        italic: "",
+        size: "12pt"
     }
-}
-
-class Rectangle {
-    constructor(config) {
-        let configObj = handleConfig(config)
-    }
-}
-
-function normalizeValue(val) {
-    console.log(val)
-    return val
-}
-
-function handleDynamicInputs(input, type, store) {
-    let inputSplit = input.trim()?.split(" ")
-    let handlers = {
-        "position": (str) => {
-            if (inputSplit.length == 1) {
-                let val = normalizeValue(input.trim())
-                store.top = val
-                store.left = val
-            }
-            else if (inputSplit.length == 2) {
-                store.top = normalizeValue(inputSplit[0])
-                store.left = normalizeValue(inputSplit[1])
-            }
-            return store
-        }
-    }
-    try {
-        handlers?.[type]()
-    }
-    catch (err) {
-        throw new Error(err)
-    }
-    return store
-}
-
-function handleConfig(config) {
-    let position = {
-        top: 0, bottom: null,
-        left: 0, right: null,
-        anchor: "tl", place: null
-    }
-    let size = {
-        height: null, width: null,
-        size: null,
-    }
-    const configKeys = Object.keys(config)
-    const protocols = {
+    protocols = {
+        // High Priority
         "opacity":  input => { ctx.globalAlpha = input },
-        "top":      input => { position.top = input },
-        "bottom":   input => { position.bottom = input },
-        "left":     input => { position.left = input },
-        "right":    input => { position.right = input },
-        "height":   input => { size.height = input },
-        "width":    input => { size.width = input },
-        "place":    input => {
-            this.position = handleDynamicInputs(
-                input,
-                "position",
-                position,
-            )
-        },
-        "size":     input => {
-            let split = input.trim().split(" ")
-            if (split.length == 1) {
-                size.height = input
-                size.width = input
-            }
-            else if (split.length == 2) {
-                size.height = split[0]
-                size.width = split[1]
-            }
-        },
+        // Text Formatting
+        "bold":     input => { this.format.bold = "bold" },
+        "italic":   input => { this.format.italic = "italic" },
+        "color":    input => { this.format.color = input },
+        "align":    input => { this.format.align = input },
+        "baseline": input => { this.format.baseline = input },
+        "fontSize": input => { this.format.size = normalizeValue(input) + "px" },
+        // Positioning
+        "top":      input => { this.position.top = input },
+        "left":     input => { this.position.left = input },
+        "place":    input => { this.position = handleDynamicInputs(input, "position", this.position) },
+        // Sizing
+        "height":   input => { this.size.height = input },
+        "width":    input => { this.size.width = input },
+        "size":     input => { this.size = handleDynamicInputs(input, "size", this.size) },
+        // Element Formatting
         "background": input => {
             ctx.fillStyle = input
-            ctx.fillRect(position.left, position.top, size.width, size.height)
+            ctx.fillRect(this.position.left, this.position.top, this.size.width, this.size.height)
         },
-        "fill":     input => protocols.background(input),
-        "bg":       input => protocols.background(input),
+        "fill":     input => this.protocols.background(input),
+        "bg":       input => this.protocols.background(input),
         "outline":  input => {
             let split = input.trim().split(" ")
             if (split.length == 1) {
@@ -164,27 +91,127 @@ function handleConfig(config) {
                 ctx.lineWidth = split[0]
                 ctx.strokeStyle = split[1]
             }
-            ctx.strokeRect(position.left, position.top, size.width, size.height)
+            ctx.strokeRect(this.position.left, this.position.top, this.size.width, this.size.height)
         },
-        "text":     input => { new Text(text, input) }
     }
-    let completedProtocols = 0
-    let totalProtocols = Object.keys(config).length
-    const protocolKeys = Object.keys(protocols)
-    for (let i = 0; i < protocolKeys.length; i++) {
-        if (config?.[protocolKeys[i]]) {
-            protocols[protocolKeys[i]](config[protocolKeys[i]])
-            completedProtocols++
+    constructor(config) {
+        let configKeys = Object.keys(config)
+        let protocolCounter = [0, configKeys.length]
+        let protocolKeys = Object.keys(this.protocols)
+        for (let i = 0; i < protocolKeys.length; i++) {
+            if (config?.[protocolKeys[i]]) {
+                this.protocols[protocolKeys[i]](config[protocolKeys[i]])
+                protocolCounter[0]++
+            }
+            if (protocolCounter[0] == protocolCounter[1]) i = protocolKeys.length
         }
-        if (completedProtocols == totalProtocols) i = protocolKeys.length
     }
 }
 
+class Text extends UIElement {
+    #getFontString() {
+        let string = ""
+        if (this.format.bold) string += this.format.bold + " "
+        if (this.format.italic) string += this.format.italic + " "
+        string += this.format.size + " "
+        string += this.format.font
+        return string
+    }
+
+    constructor(text, config) {
+        super(config)
+        ctx.font            = this.#getFontString()
+        ctx.fillStyle       = this.format.color
+        ctx.textAlign       = this.format.align
+        ctx.textBaseline    = this.format.baseline
+        ctx.fillText(text, Math.round(this.position.left), Math.round(this.position.top))
+    }
+}
+
+class Rectangle extends UIElement {
+    constructor(config) {
+        super(config)
+    }
+}
+
+class Background extends Rectangle {
+    constructor(config) {
+        super({
+            ...config,
+            size: "100% 100%",
+            background: config.background ?? "yellow"
+        })
+    }
+}
+
+function normalizeValue(val, orient) {
+    val = String(val)
+    if (val.includes("vh")) {
+        try { return Number(val.trim().replace("vh", "")) * vh }
+        catch (err) { throw new Error(err) }
+    }
+    else if (val.includes("vw")) {
+        try { return Number(val.trim().replace("vw", "")) * vw }
+        catch (err) { throw new Error(err) }
+    }
+    else if (val.includes("%")) {
+        if (!orient) throw new Error("% based values are invalid in instance: " + val)
+        try {
+            try { return Number(val.trim().replace("%", "")) * (orient == "vert" ? vh : vw) }
+            catch (err) { throw new Error(err) }
+        }
+        catch (err) { throw new Error(err) }
+    }
+    return val
+}
+
+function handleDynamicInputs(input, type, store) {
+    let inputSplit = input.trim()?.split(" ")
+    let handlers = {
+        "position": (str) => {
+            if (inputSplit.length == 1) {
+                let val = normalizeValue(input)
+                store.top = val
+                store.left = val
+            }
+            else if (inputSplit.length == 2) {
+                store.top = normalizeValue(inputSplit[0], "vert")
+                store.left = normalizeValue(inputSplit[1], "horiz")
+            }
+            return store
+        },
+        "size": (str) => {
+            if (inputSplit.length == 1) {
+                let val = normalizeValue(input)
+                store.height = val
+                store.width = val
+            }
+            else if (inputSplit.length == 2) {
+                store.height = normalizeValue(inputSplit[0], "vert")
+                store.width = normalizeValue(inputSplit[1], "horiz")
+            }
+            return store
+        }
+    }
+    try { handlers?.[type]() }
+    catch (err) { throw new Error(err) }
+    return store
+}
+
 ContentView(() => {
+    new Background({
+        background: "rgb(20, 20, 20)"
+    })
     new Rectangle({
-        place: "50 50",
-        size: "100 100",
+        place: "10% 10%",
+        size: "80% 80%",
         background: "blue",
         opacity: 0.3,
+    })
+    new Text("Title Text", {
+        place: "50% 50%",
+        fontSize: 24,
+        align: "center",
+        baseline: "middle"
     })
 })
