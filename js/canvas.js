@@ -85,35 +85,77 @@ class Rectangle {
     outline = null
     text = null
     constructor(config) {
-        let { 
-            left, right,
-            top, bottom,
-            width, 
-            height, 
-            background, 
-            outline,
-            text
-        } = config
+        let configObj = handleConfig(config)
+    }
+}
 
-        if (background) {
-            ctx.fillStyle = background
-            ctx.fillRect(left, top, width, height)
-        }
-        if (outline) {
-            let split = outline?.split(" ")
-            if (typeof split[0] == "string") {
+function handleConfig(config) {
+    let position = {
+        top: 0, bottom: null,
+        left: 0, right: null,
+        anchor: "tl", place: null
+    }
+    let size = {
+        height: null, width: null,
+        size: null,
+    }
+    let conveyor = []
+    const configKeys = Object.keys(config)
+    const protocols = {
+        "top":      input => { position.top = input },
+        "bottom":   input => { position.bottom = input },
+        "left":     input => { position.left = input },
+        "right":    input => { position.right = input },
+        "height":   input => { size.height = input },
+        "width":    input => { size.width = input },
+        "place":    input => {
+            let split = input.trim().split(" ")
+            if (split.length == 1) {
+                position.top = input
+                position.left = input
+            }
+            else if (split.length == 2) {
+                position.top = split[0]
+                position.left = split[1]
+            }
+        },
+        "size":     input => {
+            let split = input.trim().split(" ")
+            if (split.length == 1) {
+                size.height = input
+                size.width = input
+            }
+            else if (split.length == 2) {
+                size.height = split[0]
+                size.width = split[1]
+            }
+        },
+        "background": input => {
+            ctx.fillStyle = input
+            ctx.fillRect(position.left, position.top, size.width, size.height)
+        },
+        "fill":     input => protocols.background(input),
+        "bg":       input => protocols.background(input),
+        "outline":  input => {
+            let split = input.trim().split(" ")
+            if (split.length == 1) {
                 ctx.lineWidth = 1
-                ctx.strokeStyle = split[0]
+                ctx.strokeStyle = input.trim()
             }
             else {
                 ctx.lineWidth = split[0]
                 ctx.strokeStyle = split[1]
             }
-            ctx.strokeRect(left, top, width, height)
-        }
-        if (text) {
-            new Text(text, config)
-        }
+            ctx.strokeRect(position.left, position.top, size.width, size.height)
+        },
+        "opacity":  input => { ctx.globalAlpha = input },
+        "text":     input => { new Text(text, input) }
+    }
+    for (let i = 0; i < configKeys.length; i++) {
+        const currKey = configKeys[i]
+        if (protocols?.[currKey]) 
+            protocols[currKey](config?.[currKey])
+        else throw new Error(currKey + " is not a valid protocol")
     }
 }
 
@@ -123,11 +165,24 @@ ContentView(() => {
         left: 5 * vw,
         height: 5 * vh,
         width: 90 * vw,
-        outline: "red"
+        outline: "2 red"
     })
     new Text("Hey there, user!", {
         top: 50 * vh,
         left: 5 * vw,
         size: 5 * vh
+    })
+    new Rectangle({
+        top: 10 * vh,
+        left: 10 * vw,
+        height: 10 * vh,
+        width: 10 * vw,
+        background: "rgb(40, 20, 40)"
+    })
+    new Rectangle({
+        place: "10 10",
+        size: "100 100",
+        background: "blue",
+        opacity: 0.3
     })
 })
