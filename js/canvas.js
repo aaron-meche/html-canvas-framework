@@ -81,15 +81,34 @@ class Rectangle {
     }
 }
 
-function handleDynamicInputs(input, store, logic) {
+function normalizeValue(val) {
+    console.log(val)
+    return val
+}
 
-    for (let i = 0; i < logic.length; i++) {
-        let currStep = logic[i]
-        let splitStep = currStep?.split("_")
-        if (splitStep == 1) {
-            store?.[attributes[0]]
+function handleDynamicInputs(input, type, store) {
+    let inputSplit = input.trim()?.split(" ")
+    let handlers = {
+        "position": (str) => {
+            if (inputSplit.length == 1) {
+                let val = normalizeValue(input.trim())
+                store.top = val
+                store.left = val
+            }
+            else if (inputSplit.length == 2) {
+                store.top = normalizeValue(inputSplit[0])
+                store.left = normalizeValue(inputSplit[1])
+            }
+            return store
         }
     }
+    try {
+        handlers?.[type]()
+    }
+    catch (err) {
+        throw new Error(err)
+    }
+    return store
 }
 
 function handleConfig(config) {
@@ -104,6 +123,7 @@ function handleConfig(config) {
     }
     const configKeys = Object.keys(config)
     const protocols = {
+        "opacity":  input => { ctx.globalAlpha = input },
         "top":      input => { position.top = input },
         "bottom":   input => { position.bottom = input },
         "left":     input => { position.left = input },
@@ -111,20 +131,11 @@ function handleConfig(config) {
         "height":   input => { size.height = input },
         "width":    input => { size.width = input },
         "place":    input => {
-            // handleDynamicInputs(
-            //     input,
-            //     position, 
-            //     ["top_left", "top left"]
-            // )
-            let split = input.trim().split(" ")
-            if (split.length == 1) {
-                position.top = input
-                position.left = input
-            }
-            else if (split.length == 2) {
-                position.top = split[0]
-                position.left = split[1]
-            }
+            this.position = handleDynamicInputs(
+                input,
+                "position",
+                position,
+            )
         },
         "size":     input => {
             let split = input.trim().split(" ")
@@ -155,41 +166,25 @@ function handleConfig(config) {
             }
             ctx.strokeRect(position.left, position.top, size.width, size.height)
         },
-        "opacity":  input => { ctx.globalAlpha = input },
         "text":     input => { new Text(text, input) }
     }
-    for (let i = 0; i < configKeys.length; i++) {
-        const currKey = configKeys[i]
-        if (protocols?.[currKey]) 
-            protocols[currKey](config?.[currKey])
-        else throw new Error(currKey + " is not a valid protocol")
+    let completedProtocols = 0
+    let totalProtocols = Object.keys(config).length
+    const protocolKeys = Object.keys(protocols)
+    for (let i = 0; i < protocolKeys.length; i++) {
+        if (config?.[protocolKeys[i]]) {
+            protocols[protocolKeys[i]](config[protocolKeys[i]])
+            completedProtocols++
+        }
+        if (completedProtocols == totalProtocols) i = protocolKeys.length
     }
 }
 
 ContentView(() => {
     new Rectangle({
-        top: 50 * vh,
-        left: 5 * vw,
-        height: 5 * vh,
-        width: 90 * vw,
-        outline: "2 red"
-    })
-    new Text("Hey there, user!", {
-        top: 50 * vh,
-        left: 5 * vw,
-        size: 5 * vh
-    })
-    new Rectangle({
-        top: 10 * vh,
-        left: 10 * vw,
-        height: 10 * vh,
-        width: 10 * vw,
-        background: "rgb(40, 20, 40)"
-    })
-    new Rectangle({
-        place: "10 10",
+        place: "50 50",
         size: "100 100",
         background: "blue",
-        opacity: 0.3
+        opacity: 0.3,
     })
 })
