@@ -131,8 +131,6 @@ export class UIElement {
 
     format = {
         display: "block",
-        height: "auto",
-        width: "auto",
         color: "white"
     }
 

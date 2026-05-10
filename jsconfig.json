@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "$lib": ["src/lib/index.js"],
+      "$lib/*": ["src/lib/*"]
+    }
+  }
+}

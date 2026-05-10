@@ -12,16 +12,16 @@
       "import": "./dist/ginger-ui.js",
       "require": "./dist/ginger-ui.umd.cjs"
     },
-    "./source": "./js/index.js",
-    "./interface": "./js/interface.js",
-    "./router": "./js/router.js",
+    "./source": "./src/lib/index.js",
+    "./interface": "./src/lib/interface.js",
+    "./router": "./src/lib/router.js",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
-    "js/index.js",
-    "js/interface.js",
-    "js/router.js",
+    "src/lib/index.js",
+    "src/lib/interface.js",
+    "src/lib/router.js",
     "LICENSE",
     "README.md"
   ],

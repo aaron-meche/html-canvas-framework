@@ -1,64 +1,67 @@
 # Ginger UI
 
 Ginger UI is a small class-based JavaScript UI framework. Interfaces are built
-from `UIElement` classes, mounted with `new Interface()`, and can be organized
-into Vite-powered route files.
+from `UIElement` classes, mounted with `new Interface()`, and demonstrated with a
+Vite route layer inspired by SvelteKit.
 
-The package is named after Ginger. Once it is published, install it as:
+Once published, install it as:
 
 ```bash
 npm install @aaron-meche/ginger-ui
 ```
 
-## What This Repo Contains
+## Project Structure
 
 ```text
 .
-├── index.html              # Vite demo shell
-├── index.js                # npm package entry
-├── script.js               # demo bootstrap and route discovery
-├── vite.config.js          # library build config
-├── vite.demo.config.js     # demo site build config
-├── js/
-│   ├── index.js            # public framework exports
-│   ├── interface.js        # Interface, UIElement, elements, StateStore
-│   └── router.js           # file route helper
-└── routes/
-    ├── +index.js           # /
-    └── about/
-        └── +index.js       # /about
+├── index.html
+├── index.js
+├── package.json
+├── vite.config.js
+├── vite.demo.config.js
+└── src/
+    ├── main.js
+    ├── lib/
+    │   ├── index.js
+    │   ├── interface.js
+    │   ├── router.js
+    │   ├── components.js
+    │   └── theme.js
+    ├── routes/
+    │   ├── +layout.js
+    │   ├── +index.js
+    │   └── about/
+    │       └── +index.js
+    └── static/
+        ├── main.css
+        └── Figtree/
 ```
 
-## Install And Run
+`src/lib/interface.js` is the core framework implementation. The route/layout
+system is built around it in `src/lib/router.js`; the layout support does not
+change the `Interface` class.
+
+## Scripts
 
 ```bash
 npm install
 npm run dev
+npm run check
 ```
 
-The local Vite app runs the demo from `index.html`.
-
-Build the npm library:
+Build the package:
 
 ```bash
 npm run build
 ```
 
-Build the demo site:
+Build the demo app:
 
 ```bash
 npm run build:demo
 ```
 
-Run both checks:
-
-```bash
-npm run check
-```
-
-## Importing Ginger UI
-
-After publishing or linking the package, use:
+## Package Imports
 
 ```js
 import {
@@ -74,11 +77,15 @@ import {
 } from "@aaron-meche/ginger-ui"
 ```
 
-During local development inside this repo, the demo imports from source:
+Inside this Vite project, `$lib` points to `src/lib`:
 
 ```js
-import { createRouter } from "./js/index.js"
+import { Wrapper } from "$lib"
+import { CodeBlock } from "$lib/components.js"
 ```
+
+The alias is configured in `vite.config.js`, `vite.demo.config.js`, and
+`jsconfig.json`.
 
 ## Basic Interface
 
@@ -95,194 +102,83 @@ new Interface({
 })
 ```
 
-`Interface` accepts an object with `app`, `body`, or `main`. The value should be
-an array of strings or UI elements. You can also pass a mount target:
-
-```js
-new Interface({ app: elements }, { target: "#app" })
-```
-
-## UIElement
-
-`UIElement` is the base class. It renders a `div` unless you provide another
-`tag`.
-
-```js
-new UIElement({
-    tag: "section",
-    display: "grid",
-    gap: "1rem",
-    padding: "2rem",
-    background: "black",
-    color: "white",
-    content: [
-        new Wrapper("Title", {
-            font_size: "2rem",
-            font_weight: 800
-        }),
-        "Plain text works too."
-    ]
-})
-```
-
-Most config keys become inline CSS. Use snake case for CSS properties:
-
-```js
-{
-    font_size: "1rem",
-    border_radius: "8px",
-    align_items: "center"
-}
-```
-
-Common HTML attributes are supported directly:
-
-```js
-new UIElement({
-    tag: "a",
-    href: "https://example.com",
-    target: "_blank",
-    rel: "noreferrer",
-    content: "Example"
-})
-```
-
-For custom attributes, use `attributes`, `attrs`, `data`, or `aria`:
+Most element config keys become inline CSS. Use snake case for CSS properties:
 
 ```js
 new Wrapper("Save", {
-    role: "button",
-    data: { action: "save" },
-    aria: { label: "Save document" }
+    font_size: "1rem",
+    border_radius: "8px",
+    align_items: "center"
 })
 ```
 
-## Built-In Elements
+## Routes
 
-```js
-new Wrapper("Content", { padding: "1rem" })
-
-new Button("Click", {
-    onclick: elem => {
-        elem.innerText = "Clicked"
-    }
-})
-
-new Image("/avatar.png", {
-    alt: "Avatar",
-    height: "2rem",
-    border_radius: "100vh"
-})
-
-new HStack([left, right], {
-    gap: "1rem"
-})
-
-new VStack([top, bottom], {
-    gap: "1rem"
-})
-```
-
-## Events
-
-Use `onclick` and `onhover` in element config:
-
-```js
-new Button("Hover me", {
-    padding: "0.75rem 1rem",
-    cursor: "pointer",
-    onhover: elem => {
-        elem.style.background = "orange"
-    },
-    onclick: () => {
-        alert("Clicked")
-    }
-})
-```
-
-Handlers receive the real DOM element. Hover styles are restored on mouse leave.
-
-## State
-
-`StateStore` is a tiny state container. Any element whose `content` is a function
-becomes a live region.
-
-```js
-const counter = new StateStore({ count: 0 })
-
-new Wrapper([
-    new Wrapper(() => `Count: ${counter.get("count")}`),
-    new Button("Increment", {
-        onclick: () => {
-            counter.set("count", counter.get("count") + 1)
-        }
-    })
-])
-```
-
-Calling `set()` or `update()` refreshes all live regions.
-
-## Routes Directory
-
-The demo uses a Svelte-like route convention:
+Routes live in `src/routes`. A `+index.js` file is the landing page for that
+folder path:
 
 ```text
-routes/+index.js          -> /
-routes/about/+index.js    -> /about
-routes/docs/+index.js     -> /docs
+src/routes/+index.js          -> /
+src/routes/about/+index.js    -> /about
+src/routes/docs/+index.js     -> /docs
 ```
 
-Each route exports a default page function or value:
+Each page exports a default function or value:
 
 ```js
-import { Wrapper } from "../js/index.js"
+import { Wrapper } from "$lib"
 
 export const title = "Home"
 
-export default function HomePage({ link, navigate, path }) {
-    return [
-        new Wrapper([
-            "Welcome home",
-            link("About", "/about")
-        ])
-    ]
+export default function HomePage({ link }) {
+    return new Wrapper([
+        "Welcome home",
+        link("About", "/about")
+    ])
 }
 ```
 
-`script.js` wires the route folder to the router:
+## Layouts
+
+Layouts use `+layout.js`, similar to SvelteKit. The root layout wraps every
+route below `src/routes`:
 
 ```js
-import { createRouter } from "./js/index.js"
+import { AppShell } from "$lib/components.js"
+
+export default function Layout({ children, link }) {
+    return AppShell(children, { link })
+}
+```
+
+Nested layouts are supported by folder path. For example,
+`src/routes/docs/+layout.js` would wrap `src/routes/docs/+index.js` and deeper
+docs routes.
+
+## Router Setup
+
+`src/main.js` wires Vite route modules to the router:
+
+```js
+import { createRouter } from "$lib"
+import "./static/main.css"
 
 const routes = import.meta.glob("./routes/**/+index.js")
+const layouts = import.meta.glob("./routes/**/+layout.js")
 
 createRouter(routes, {
+    layouts,
     target: "#app",
     title: "Ginger UI"
 }).start()
 ```
 
-`import.meta.glob` is a Vite feature, so route discovery is handled at build
-time by Vite.
+`import.meta.glob` is a Vite feature, so route discovery happens through Vite at
+dev/build time.
 
 ## Package Build
 
-The npm build is controlled by `vite.config.js`:
-
-```js
-export default defineConfig({
-    build: {
-        lib: {
-            entry: resolve(__dirname, "index.js"),
-            name: "GingerUI",
-            formats: ["es", "umd"],
-            fileName: format => format === "es"
-                ? "ginger-ui.js"
-                : "ginger-ui.umd.cjs"
-        }
-    }
-})
-```
+The package entry is `index.js`, which re-exports `src/lib/index.js`.
 
 `npm run build` creates:
 
@@ -291,4 +187,6 @@ dist/ginger-ui.js
 dist/ginger-ui.umd.cjs
 ```
 
-Those files are the package entry points configured in `package.json`.
+Those files are the import and require entry points configured in
+`package.json`.
+
