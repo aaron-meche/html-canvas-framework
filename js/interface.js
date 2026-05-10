@@ -26,7 +26,10 @@ export class Interface {
         for (let i = 0; i < bodyTarget.length; i++) {
             const currElem = bodyTarget[i]
             if (typeof currElem == "string") bodyContent += currElem
-            else bodyContent += currElem.getHTML()
+            else {
+                let convertedHTML = currElem.getHTML() ?? "empty"
+                bodyContent += convertedHTML
+            }
         }
         docBody.innerHTML = bodyContent + docBody.innerHTML
     }
@@ -105,14 +108,16 @@ export class UIElement {
             window.clickRegistry.set(id, input);
             this.behaviors.onclick = "window.dispatchClick('" + id + "', this);"
         },
-        "contains": input => {
+        "content": input => {
             // Default, Array-based content
             if (Array.isArray(input)) {
                 let contentArray = input
                 contentArray.forEach(elem => {
                     if (typeof elem == "string")
                         this.content += elem
-                    else this.content += elem.getHTML()
+                    else if (elem instanceof UIElement ) 
+                        this.content += elem.getHTML()
+                    else this.content += elem
                 })
             }
             // State, Function-based content
@@ -122,6 +127,8 @@ export class UIElement {
                 this.identifiers["live_state"] = id
                 stateManager[id] = input
             }
+            // String, basic input
+            else if (typeof input == "string") this.content = input
         }
     }
 
@@ -198,6 +205,15 @@ export class VStack extends UIElement {
             display: "grid",
             grid_template_columns: "1fr",
             contains: elements
+        })
+    }
+}
+
+export class Wrapper extends UIElement {
+    constructor(content, config) {
+        super({
+            ...config,
+            content: content
         })
     }
 }

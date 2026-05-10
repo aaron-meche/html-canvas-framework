@@ -11,6 +11,7 @@ import {
     Rectangle,      // Basic UI Element DIV
     UIElement,      // Parent UI Element Class
     HStack, VStack, // Visual Elements
+    Wrapper,        // Content Wrapper
     StateStore,     // State Manager
     classes         // Style
 } from "./js/interface.js"
@@ -19,67 +20,56 @@ let state = new StateStore({
     "counter": 0
 })
 
-const basicRectangle = (level) => {
-    let base = 12
-    let size = 12
-    let sum = base + size * level
-    let color = `rgb(${sum}, ${sum}, ${sum})` 
-    return new Rectangle({
-        height: "10vh",
-        background: color,
-        text_align: "center",
-        font_size: "10pt",
-        font_weight: 600,
-        opacity: 0.5,
-        onhover: (elem) => {
-            elem.style.boxShadow = "inset 0 0 1rem 0 rgb(255, 255, 255)"
-            state.update(data => {
-                data.counter++
-                return data
+const basicColor = (level) => {
+    const base = [240, 24, 6]
+    let satDif = 4
+    let lightDif = 8
+    return `hsl(${base[0]}, ${base[1] + satDif * level}%, ${base[2] + lightDif * level}%)`
+}
+
+const NavigationBar = (leftSection, rightSection) => {
+    return new UIElement({
+        display: "grid",
+        align_items: "center",
+        grid_template_columns: "auto min-content",
+        padding: "1.2rem",
+        background: basicColor(1),
+        content: [
+            new Wrapper(leftSection),
+            new Wrapper(rightSection, {
+                display: "flex",
+                align_items: "center",
             })
+        ]
+    })
+}
+
+const NavButton = (label, action) => {
+    return new Wrapper(label, {
+        padding: "0.8rem 1.2rem",
+        border_radius: "0.8rem",
+        cursor: "pointer",
+        onhover: elem => {
+            elem.style.background = basicColor(2)
         }
     })
 }
 
-let gradient = []
-for (let i = 0; i < 10; i++) { gradient.push(basicRectangle(i)) }
-
-const examples = [
-    [
-        new HStack(gradient),
-        new Rectangle({
-            ...classes.heading,
-            ...classes.center,
-            padding: "1.6rem",
-            contains: () => {
-                return "Counter: " + state.get("counter")
-            }
-        }),
-        new Rectangle({
-            ...classes.heading,
-            ...classes.center,
-            padding: "1.6rem",
-            contains: () => {
-                return state.get("time")
-            }
-        })
-    ]
-]
-
-let startTime = Date.now()
-state.set("time", 0)
-setInterval(() => {
-    let elapsed = Math.round((Date.now() - startTime) / 100)
-    state.set("time", Math.round(elapsed))
-})
-
 const appContent = [
-    new UIElement({
-        padding: "1.2rem",
-        background: "rgb(20, 20, 20)",
-    })
+    NavigationBar(
+        [
+            new Wrapper("Aaron Meche", {
+                font_size: "1.6rem",
+                font_weight: 600
+            })
+        ],
+        [
+            NavButton("Home"),
+            NavButton("About")
+        ]
+    )
 ]
 
 const ui = new Interface({
-    "app": examples[0]
+    "app": appContent
 })
