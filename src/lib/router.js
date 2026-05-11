@@ -1,4 +1,4 @@
-import { Button, Interface, UIElement } from "./interface.js"
+import { Button, Interface, UIElement } from "./processor.js"
 
 function normalizePath(path) {
     const parsed = new URL(path, window.location.origin)

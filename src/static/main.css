@@ -35,14 +35,3 @@ input {
     box-sizing: border-box;
     display: block;
 }
-
-pre,
-code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-}
-
-@media (max-width: 760px) {
-    .hero-grid {
-        grid-template-columns: 1fr !important;
-    }
-}

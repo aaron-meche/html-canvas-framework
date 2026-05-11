@@ -130,8 +130,7 @@ export class UIElement {
     content = ""
 
     format = {
-        display: "block",
-        color: "white"
+        display: "block"
     }
 
     attributes = {}
