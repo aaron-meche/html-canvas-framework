@@ -1,0 +1,47 @@
+//
+// Rue Programming Language
+//
+
+import { Wrapper, UIElement } from "$lib"
+import HeaderImage from "$lib/assets/header-image.js"
+import * as theme from "$lib/theme.js"
+import "./main.rue"
+
+body {
+    margin: 0
+    background: black
+}
+
+.random-div {
+    background: red
+    padding: 8pt
+
+    :hover{
+        background: blue
+        outline: solid 1pt blue
+    }
+}
+
+component Header(text, config) {            // translates to: function Header(...params) { ...
+    return new UI Element({
+        ...config,
+        font-size: 2.4rem
+        font-weight: 700
+        content: text
+    })
+}
+
+Interface {                                 // translates to: export default const Interface { ...
+    "body": [
+        Header("This is a header")
+        new Wrapper("This is another header", {
+            font-size: 2.4rem
+            font-weight: 700
+        })
+        new UIElement({
+            font-size: 2.4rem
+            font-weight: 700
+            content: "And this is another header!"
+        })
+    ]
+}
