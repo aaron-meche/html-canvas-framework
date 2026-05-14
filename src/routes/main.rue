@@ -3,8 +3,6 @@
 //
 
 import { Wrapper, UIElement } from "$lib"
-import HeaderImage from "$lib/assets/header-image.js"
-import * as theme from "$lib/theme.js"
 import "./main.rue"
 
 body {
@@ -16,14 +14,14 @@ body {
     background: red
     padding: 8pt
 
-    :hover{
+    :hover {
         background: blue
         outline: solid 1pt blue
     }
 }
 
 component Header(text, config) {            // translates to: function Header(...params) { ...
-    return new UI Element({
+    return new UIElement({
         ...config,
         font-size: 2.4rem
         font-weight: 700
@@ -32,6 +30,14 @@ component Header(text, config) {            // translates to: function Header(..
 }
 
 Interface {                                 // translates to: export default const Interface { ...
+    "head": {
+        title: "Home Page",
+        favicon: "icon.png",
+        head: {
+            title: "Home Page",
+            favicon: "icon.png",
+        }
+    }
     "body": [
         Header("This is a header")
         new Wrapper("This is another header", {
